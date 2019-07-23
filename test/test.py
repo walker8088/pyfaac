@@ -1,26 +1,36 @@
+
 import pyfaac
 
-samplerate = 16000
+samplerate = 8000
 channels = 1
-bitrate = 92000
 
-input = open('in.wav', 'rb')
+input = open('audio.pcm', 'rb')
 output = open('out.aac', 'wb')
 
-codec = pyfaac.pyfaac(samplerate, channels, bitrate)
-size = codec.getSize()
+codec = pyfaac.FaacEncoder(samplerate, channels)
+
+codec.config(pyfaac.MPEG4, pyfaac.LOW, pyfaac.FAAC_INPUT_16BIT, pyfaac.ADTS_STREAM)
+
+samples = codec.getSamples()
 
 while True:
-    data = input.read(size)
+    data = input.read(samples*2)
     if data:
-        stream = codec.encode(data)
+        stream = codec.encode(data, samples)
+        if len(stream) > 0:
+        	 output.write(stream)
+    else:
+        break
+
+while True:
+    stream = codec.encode(b'', 0)
+    print(len(stream))
+    if len(stream) > 0:
         output.write(stream)
     else:
         break
 
-excess = codec.close()
+codec.close()
 
 input.close()
-output.write(excess)
-output.flush()
 output.close()
